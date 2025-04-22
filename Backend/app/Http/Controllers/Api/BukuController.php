@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Buku;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\PostResource;
 use Illuminate\Support\Facades\Validator;
 
@@ -44,6 +45,8 @@ class BukuController extends Controller
         }
 
         //save to database
+        $coverPath = $request->file('cover_buku')->store('cover_buku', 'public');
+
         $buku = Buku::create([
             'judul' => $request->judul,
             'penulis' => $request->penulis,
@@ -53,10 +56,13 @@ class BukuController extends Controller
             'jumlah_halaman' => $request->jumlah_halaman,
             'kategori' => $request->kategori,
             'sinopsis' => $request->sinopsis,
-            'cover_buku' => $request->file('cover_buku')->store('cover_buku'),
+            'cover_buku' => $coverPath,
             'status' => $request->status,
             'lokasi_rak' => $request->lokasi_rak
         ]);
+
+        // Tambahkan URL untuk cover buku
+        $buku->cover_buku_url = Storage::url($coverPath);
 
         return new PostResource($buku);
     }
@@ -67,6 +73,11 @@ class BukuController extends Controller
     public function show(string $id)
     {
         $buku = Buku::findOrFail($id);
+
+        // Tambahkan URL untuk cover buku
+        if ($buku->cover_buku) {
+            $buku->cover_buku_url = Storage::url($buku->cover_buku);
+        }
 
         return response()->json([
             'success' => true,
@@ -101,7 +112,13 @@ class BukuController extends Controller
         }
 
         if ($request->hasFile('cover_buku')) {
-            $coverPath = $request->file('cover_buku')->store('cover_buku');
+            // Hapus file lama jika ada
+            if ($buku->cover_buku) {
+                Storage::disk('public')->delete($buku->cover_buku);
+            }
+
+            // Simpan file baru di disk 'public'
+            $coverPath = $request->file('cover_buku')->store('cover_buku', 'public');
         } else {
             $coverPath = $buku->cover_buku;
         }
@@ -119,6 +136,9 @@ class BukuController extends Controller
             'status' => $request->status,
             'lokasi_rak' => $request->lokasi_rak
         ]);
+
+        // Tambahkan URL untuk cover buku
+        $buku->cover_buku_url = Storage::url($coverPath);
 
         return response()->json([
             'success' => true,

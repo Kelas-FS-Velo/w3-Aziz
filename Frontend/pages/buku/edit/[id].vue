@@ -303,11 +303,9 @@ export default {
         this.post.status = response.data.data.status;
         this.post.lokasi_rak = response.data.data.lokasi_rak;
 
-        // simpan URL gambar yang sudah ada
-        console.log("Data cover_buku", response.data.data.cover_buku);
-        if (response.data.data.cover_buku) {
-          this.imageUrl = `http://localhost:8000/storage/cover_buku/${response.data.data.cover_buku}`;
-          console.log("URL gambar final", this.imageUrl);
+        // Gunakan URL yang sudah dibuat oleh backend
+        if (response.data.data.cover_buku_url) {
+          this.imageUrl = `http://localhost:8000${response.data.data.cover_buku_url}`;
         }
       })
       .catch((error) => {
